@@ -1,18 +1,23 @@
+/**
+ * 
+ * reads signal from 2 mics, and switch on leds to indicate which mic is closer to the source of the noise.
+ * Works by identifying the timing of peak signal over 1000 samples 
+ * 
+ * Important: the arduino must run on batteries for the mics to work properly
+ *
+ */
 
-int mic1 = A0;    // select the input pin for the potentiometer
-int mic2 = A3;    // select the input pin for the potentiometer
-
-
+// microphone pins
+int mic1 = A0;    
+int mic2 = A3;    
 
 
 void setup() {
   Serial.begin(115200);  
-  //pinMode(mic1, INPUT);
-  //pinMode(mic2, INPUT);
 
-   pinMode(LED_BUILTIN, OUTPUT);
-   pinMode(7, OUTPUT);
-   pinMode(8, OUTPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(7, OUTPUT);
+  pinMode(8, OUTPUT);
       
   reset();
 }
@@ -40,14 +45,18 @@ void loop() {
 }
 */
 
-int MIC_REF=440;
 
+// number of samplings per bucket
 int SAMPLES=1000;
 
 
+// record the values from mic1, for debug only
 byte d1[1000];
 
+// time inside bucket
 int t=0;
+
+// max sampling value and time for mic 1 and 2
 int max1;
 int t1;
 int max2;
@@ -69,55 +78,77 @@ void loop(){
 
    if (t>SAMPLES){
 
-    int threshold=160;
+
+      // End of the sample, so check if the threshold was reach on both mics,
+      
+      //
+      int threshold=160;
       if (max1>threshold &&  max2>threshold){
-      digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+      
+        
+        // some noise occured
 
 
-      int dtt=2;
-      int dt=t1-t2;
-      if (dt>dtt){
-        digitalWrite(7, HIGH); 
-        digitalWrite(8, LOW);  
-      } else if (dt<-dtt){
-        digitalWrite(8, HIGH); 
-        digitalWrite(7, LOW);  
-      } else {
-        digitalWrite(8, HIGH); 
-        digitalWrite(7, HIGH);  
-      }
+        // turn the default LED on
+        digitalWrite(LED_BUILTIN, HIGH);   
+
+
+        // dtt is threshold for time difference
+        int dtt=2;
+
+        // difference in peak times
+        int dt=t1-t2;
+
+       
+        if (dt>dtt){
+          // peak signal was recorded earlier on mic2
+          digitalWrite(7, HIGH); 
+          digitalWrite(8, LOW);  
+        } else if (dt<-dtt){
+          // peak signal was recorded earlier on mic1
+          digitalWrite(8, HIGH); 
+          digitalWrite(7, LOW);  
+        } else {
+          // unclear
+          digitalWrite(8, HIGH); 
+          digitalWrite(7, HIGH);  
+        }
  
- 
-      Serial.print("t1:");
-      Serial.print(t1);
-      Serial.print("max1:");
-      Serial.println(max1);
+
+        // dump some debug info on serial
+        Serial.print("t1:");
+        Serial.print(t1);
+        Serial.print("max1:");
+        Serial.println(max1);
 
 
-      Serial.print("t2:");
-      Serial.print(t2);
-      Serial.print("max2:");
-      Serial.println(max2);
+        Serial.print("t2:");
+        Serial.print(t2);
+        Serial.print("max2:");
+        Serial.println(max2);
 
-      for(int i=0;i<SAMPLES;i++){
-        Serial.print(" ");       
-        int n=d1[i]-127;
-        int an=n;
-        if (an<0)
-          an=-an;
-
-        if (an>30)  
-        Serial.print(d1[i]);
-        else
-        Serial.print("o");
-        
-        if (i%32==0)
-        Serial.println();        
-        
-        
-      }
+        for(int i=0;i<SAMPLES;i++){
+          Serial.print(" ");       
+          int n=d1[i]-127;
+          int an=n;
+          if (an<0)
+            an=-an;
+  
+          if (an>30)  
+          Serial.print(d1[i]);
+          else
+          Serial.print("o");
+          
+          if (i%32==0)
+          Serial.println();        
+          
+          
+        }
       } else {
-       digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
+
+        // not loud noise hear, so switch off all leds   
+        
+        digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
 
         digitalWrite(8, LOW); 
         digitalWrite(7, LOW);  
@@ -129,11 +160,14 @@ void loop(){
     
    }
 
+
+
+   //  read the mics values, and maybe update max
    
     
-   int n1=analogRead(mic1)/4;
-//   int n=h-MIC_REF;
-  // if (n<0) n=-n;
+   int n1=analogRead(mic1)/4; // n1 range is [0..256]
+   //   int n=h-MIC_REF;
+   // if (n<0) n=-n;
 
    if (n1>max1){
 
@@ -143,38 +177,20 @@ void loop(){
       
     
    }
- //    d1[t]=n1;
+   //    d1[t]=n1;
 
+   delayMicroseconds(5);
 
-
-delayMicroseconds(5);
-//
-//   
    int n2=analogRead(mic2)/4;
-//   int n=h-MIC_REF;
-  // if (n<0) n=-n;
+   //   int n=h-MIC_REF;
+   // if (n<0) n=-n;
 
    if (n2>max2){
-
-        
-      
         max2=n2;
         t2=t;
       
    }
-//   
+   //   
    t++;
    delayMicroseconds(5);
-   
-
-
-
-
-
-
-
-
-
-    
-   
 }
