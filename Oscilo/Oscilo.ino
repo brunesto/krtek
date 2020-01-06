@@ -112,7 +112,7 @@ void loop() {
 
 #define SAMPLES_REC 128
 // record the values from mic1, for debug only
-byte d1[SAMPLES_REC];
+byte d1[SAMPLES_REC*MICS];
 
 
 int threshold=160;
@@ -155,11 +155,11 @@ void record(){
      
 
       
-      if (i==0){
+      
           if (t<SAMPLES_REC){
-            d1[t]=n/4; 
+            d1[t*MICS+i]=n/4; 
           }
-      }
+      
 
       
       n=n-512;
@@ -294,14 +294,27 @@ void updateScreen(){
 
       display.clearDisplay();
       display.setTextSize(1);
-      
-      for(int i=0;i<SAMPLES_REC;i++){
-        byte y=d1[i]/4;
+
+      int h=64/MICS;
+
+      for(int i=0;i<MICS;i++){
+
+      int h0=i*h; 
+    
+      for(int j=0;j<SAMPLES_REC;j++){
+        byte y=d1[j*MICS+i]/4;
+
+        
+        
         if (y<0)
           y=0;
         else if (y>63)
           y=63;
-        display.drawLine(i,0,i,(int)y, SSD1306_WHITE);
+
+        y=y/MICS;
+          
+        display.drawLine(j,h0,j,h0+(int)y, SSD1306_WHITE);
+      }
       }
 
 // display.print(d1[10]);

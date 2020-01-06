@@ -7,17 +7,78 @@
  *
  */
 
-// microphone pins
-int mic1 = A0;    
-int mic2 = A3;    
+
+
+
+// -- screen ----------------------------------------------------------
+
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+
+
+
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+
+// Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
+#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+void setupScreen() {
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3D for 128x64
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;); // Don't proceed, loop forever
+  }
+
+  // Clear the buffer
+  display.clearDisplay();
+  display.setTextSize(2);             // Normal 1:1 pixel scale
+  display.setTextColor(SSD1306_WHITE);        // Draw white text
+  display.setCursor(0,0);             // Start at top-left corner
+  display.println("ready...");
+
+
+  
+  display.display();
+
+   
+  // Show the display buffer on the screen. You MUST call display() after
+  // drawing commands to make them visible on screen!
+}
+
+
+
+
+// -- mic configuration --------------------------------------------
+
+
+
+//int DELAY
+
+
+
+
+
+
+
+
+
 
 
 void setup() {
   Serial.begin(115200);  
 
+
+  setupScreen();
+
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(7, OUTPUT);
   pinMode(8, OUTPUT);
+
+  pinMode(6, INPUT);    // sets the digital pin 6 as input
       
   reset();
 }
@@ -47,87 +108,280 @@ void loop() {
 
 
 // number of samplings per bucket
-int SAMPLES=1000;
+#define SAMPLES 1000
+
+#define MICS 2
 
 
+
+#define SAMPLES_REC 0
 // record the values from mic1, for debug only
-byte d1[1000];
+
+byte d1[SAMPLES_REC*MICS];
+
+
+int threshold=50;
+
+// microphone pins
+int micPin[MICS] = {A0,A1};    
+
+
+
+// total number of buckets so far
+int buckets;
+
 
 // time inside bucket
 int t=0;
 
-// max sampling value and time for mic 1 and 2
-int max1;
-int t1;
-int max2;
-int t2;
+// max sampling value
+int vmax[MICS];
+
+// timing of max sampling value
+int tmax[MICS];
 
 
 void reset(){
     // reset
-      t=0;
-      max1=0;
-      t1=-1;
-      max2=0;
-      t2=-1;
-      
-            
+    for(int i=0;i<MICS;i++){
+      vmax[i]=0;
+      tmax[i]=0;      
+    }
 }
 
-void loop(){
+void record(){
 
-   if (t>SAMPLES){
+  
+
+   //  read the mics values, and maybe update max
+    for(int i=0;i<MICS;i++){
+    
+      int n=analogRead(micPin[i]); // n1 range is [0..1024]
+     
+
+      
+      
+          if (t<SAMPLES_REC){
+            d1[t*MICS+i]=n/4; 
+          }
+      
+
+      
+      n=n-512;
+      if (n<0)
+        n=-n;
+
+      
+//   n1=n1/4;
+//   n2=n2/4;
+   
+   //   int n=h-MIC_REF;
+   // if (n<0) n=-n;
+
+   if (n>vmax[i]){
+        vmax[i]=n;
+        tmax[i]=t;
+   }
+   //    d1[t]=n1;
+
+    } 
+  
+   //   
+   t++;
+   
+   delayMicroseconds(10);
 
 
-      // End of the sample, so check if the threshold was reach on both mics,
+}
+
+
+int firstMic=-1;
+int worstDt;
+
+void analyze(){
+
+  // reet analyze flag
+
+
+    // 
+
+  boolean ok=false;
+   // check if the threshold was reach on both mics,
+  for(int i=0;i<MICS;i++){
+    if (vmax[i]>threshold)
+      ok=true;
+  }
+  if (!ok){
+    firstMic=-1;
+    return;
+  }
+
+  firstMic=0;
+  int firstMicT=SAMPLES;
+  for(int i=0;i<MICS;i++){
+    if (tmax[i]<firstMicT){
+      firstMicT=tmax[i];
+      firstMic=i;
+    }    
+  }
+
+  TODO: if max dt > xxxx then we are looking at different noises, so fail analyze
+
+
+  int worstDt=0; 
+  for(int j=0;j<MICS;j++){
+    if (j!=firstMic){
+       int dt=tmax[j]-firstMicT;
+       if (dt>worstDt)
+          worstDt=dt;
+    }    
+  }
+  
+  
+  
+      
+
+
+
       
       //
-      int threshold=160;
-      if (max1>threshold &&  max2>threshold){
+     
+//      if (max1>threshold &&  max2>threshold){
+//      
+//        
+//        // some noise occured
+//
+//
+//        // turn the default LED on
+//        digitalWrite(LED_BUILTIN, HIGH);   
+//
+//
+//        // dtt is threshold for time difference
+//        int dtt=2;
+//
+//        // difference in peak times
+//        int dt=t1-t2;
+//
+//       
+//        if (dt>dtt){
+//          // peak signal was recorded earlier on mic2
+//          digitalWrite(7, HIGH); 
+//          digitalWrite(8, LOW);  
+//        } else if (dt<-dtt){
+//          // peak signal was recorded earlier on mic1
+//          digitalWrite(8, HIGH); 
+//          digitalWrite(7, LOW);  
+//        } else {
+//          // unclear
+//          digitalWrite(8, HIGH); 
+//          digitalWrite(7, HIGH);  
+//        }
+//      
+//         } else {
+//
+//        // not loud noise hear, so switch off all leds   
+//        
+//        digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
+//
+//        digitalWrite(8, LOW); 
+//        digitalWrite(7, LOW);  
+//        
+//        Serial.print(".");        
+//      }
+//
+
+  
+}
+
+
+void updateScreen(){
+  // if (buckets%4==0)
+   {
+    display.clearDisplay();
+    
+   display.setCursor(0,0);             // Start at top-left corner
+   float bps=(1000.0*buckets)/millis();
+    display.print(bps);
+    display.print(" ");
+    display.print(firstMic);
+    display.println();
+
+
+    for(int i=0;i<MICS;i++){
+      if (i==firstMic)
+        display.print("*");
+      else
+        display.print(" ");
+      display.print(vmax[i]);
+      display.print("@");
+      display.print(tmax[i]);
+      if (firstMic!=-1){
+        display.print(" ");
+        display.print(tmax[i]-tmax[firstMic]);
+      }
+      display.println();
+
       
+    }
+    
+  
+    
+  
+    // Show the display buffer on the screen. You MUST call display() after
+    // drawing commands to make them visible on screen!
+    display.display();
+   }
+     if (SAMPLES_REC>0 && buckets%4==1)
+    {
+
+      display.clearDisplay();
+     
+
+      int h=64/MICS;
+
+      for(int i=0;i<MICS;i++){
+
+      int h0=i*h; 
+    
+      for(int j=0;j<SAMPLES_REC;j++){
+        byte y=d1[j*MICS+i]/4;
+
         
-        // some noise occured
+        
+        if (y<0)
+          y=0;
+        else if (y>63)
+          y=63;
+
+        y=y/MICS;
+          
+        display.drawLine(j,h0,j,h0+(int)y, SSD1306_WHITE);
+      }
+      }
+
+// display.print(d1[10]);
+  
+      display.display();
+    }
+
+}
 
 
-        // turn the default LED on
-        digitalWrite(LED_BUILTIN, HIGH);   
+void dumpSerial(){
 
+//        // dump some debug info on serial
+//        Serial.print("t1:");
+//        Serial.print(t1);
+//        Serial.print("max1:");
+//        Serial.println(max1);
+//
+//
+//        Serial.print("t2:");
+//        Serial.print(t2);
+//        Serial.print("max2:");
+//        Serial.println(max2);
 
-        // dtt is threshold for time difference
-        int dtt=2;
-
-        // difference in peak times
-        int dt=t1-t2;
-
-       
-        if (dt>dtt){
-          // peak signal was recorded earlier on mic2
-          digitalWrite(7, HIGH); 
-          digitalWrite(8, LOW);  
-        } else if (dt<-dtt){
-          // peak signal was recorded earlier on mic1
-          digitalWrite(8, HIGH); 
-          digitalWrite(7, LOW);  
-        } else {
-          // unclear
-          digitalWrite(8, HIGH); 
-          digitalWrite(7, HIGH);  
-        }
- 
-
-        // dump some debug info on serial
-        Serial.print("t1:");
-        Serial.print(t1);
-        Serial.print("max1:");
-        Serial.println(max1);
-
-
-        Serial.print("t2:");
-        Serial.print(t2);
-        Serial.print("max2:");
-        Serial.println(max2);
-
-        for(int i=0;i<SAMPLES;i++){
+        for(int i=0;i<SAMPLES_REC;i++){
           Serial.print(" ");       
           int n=d1[i]-127;
           int an=n;
@@ -144,53 +398,16 @@ void loop(){
           
           
         }
-      } else {
-
-        // not loud noise hear, so switch off all leds   
-        
-        digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
-
-        digitalWrite(8, LOW); 
-        digitalWrite(7, LOW);  
-        
-        Serial.print(".");        
-      }
-
-      reset();
-    
-   }
-
-
-
-   //  read the mics values, and maybe update max
    
-    
-   int n1=analogRead(mic1)/4; // n1 range is [0..256]
-   //   int n=h-MIC_REF;
-   // if (n<0) n=-n;
 
-   if (n1>max1){
+}
+void loop(){
 
-       
-        max1=n1;
-        t1=t;
-      
-    
-   }
-   //    d1[t]=n1;
-
-   delayMicroseconds(5);
-
-   int n2=analogRead(mic2)/4;
-   //   int n=h-MIC_REF;
-   // if (n<0) n=-n;
-
-   if (n2>max2){
-        max2=n2;
-        t2=t;
-      
-   }
-   //   
-   t++;
-   delayMicroseconds(5);
+   reset();
+   for(t=0;t<SAMPLES;t++)
+      record();  
+   buckets++;
+   analyze();    
+   updateScreen();
+// dumpSerial();
 }

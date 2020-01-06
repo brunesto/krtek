@@ -1,0 +1,19 @@
+
+
+
+3 mics: 5k samples/sec
+~0.2 ms per sample
+
+1 mic:16k samples/sec
+0.0625 ms per sample
+
+
+
+sounds travel at 300m/s
+so 0.3m/ms
+
+0.060.2ms
+
+
+so the bias is 6 cm
+
