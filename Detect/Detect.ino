@@ -134,12 +134,22 @@ byte expectInput(byte * buttons) {
 }
 
 
+
 void displayReset() {
   display.clearDisplay();
   display.setTextSize(2);             // Normal 1:1 pixel scale
   display.setTextColor(SSD1306_WHITE);        // Draw white text
   display.setCursor(0, 0);
 }
+
+
+
+void displayMessage(class __FlashStringHelper *msg) {
+  displayReset();
+  display.print(msg);
+  display.display();
+}
+
 
 //
 //void displayPrintf(const char *format, va_list ap) {
@@ -191,7 +201,7 @@ void showChoices(int currentChoice, int choices, class __FlashStringHelper  ** c
   LOGN(currentChoice);
 
 
- 
+
   int startDisplay = 0;
 
   if (currentChoice > 1) {
@@ -219,13 +229,13 @@ void showChoices(int currentChoice, int choices, class __FlashStringHelper  ** c
 }
 
 
-int getChoice(int currentChoice, int choices,class __FlashStringHelper ** choicesText) {
+int getChoice(int currentChoice, int choices, class __FlashStringHelper ** choicesText) {
 
   while (true) {
 
 
 
-    showChoices(currentChoice,choices, choicesText);
+    showChoices(currentChoice, choices, choicesText);
 
     int button = getInputReleased(BUTTONS_ALL);
     switch (button) {
@@ -998,15 +1008,15 @@ void dumpSerial() {
 #define MENU_MAIN_S 6
 class __FlashStringHelper * MENU_MAIN[MENU_MAIN_S];
 
-void setupMenuMain(){
-  MENU_MAIN[0]=F("Detect");
-  MENU_MAIN[1]=F( "Info");
-  MENU_MAIN[2]=F( "Auto");
-  MENU_MAIN[3]=F( "Config");
-  MENU_MAIN[4]=F( "Oscilo");
-  MENU_MAIN[5]=F( "About");
-  
-  
+void setupMenuMain() {
+  MENU_MAIN[0] = F("Detect");
+  MENU_MAIN[1] = F( "Info");
+  MENU_MAIN[2] = F( "Auto");
+  MENU_MAIN[3] = F( "Config");
+  MENU_MAIN[4] = F( "Oscilo");
+  MENU_MAIN[5] = F( "About");
+
+
 }
 /**
    enter the main menu
@@ -1019,7 +1029,7 @@ int menuMainChoice = 0;
 
 void menuMain() {
   while (true) {
-    menuMainChoice = getChoice(menuMainChoice, MENU_MAIN_S,MENU_MAIN);
+    menuMainChoice = getChoice(menuMainChoice, MENU_MAIN_S, MENU_MAIN);
     switch (menuMainChoice) {
       case 0:
         mode = MODE_DETECT;
@@ -1053,21 +1063,21 @@ void menuMain() {
 #define MENU_CONFIG_S 6
 class __FlashStringHelper  * MENU_CONFIG[MENU_CONFIG_S] ;
 
-void setupMenuConfig(){
-  MENU_CONFIG[0]=F("Back");
-  MENU_CONFIG[1]=F( "loop us");
-  MENU_CONFIG[2]=F( "mics");
-  MENU_CONFIG[3]=F( "maxdt");
-  MENU_CONFIG[4]=F( "minv");
-  MENU_CONFIG[5]=F( "samples");
+void setupMenuConfig() {
+  MENU_CONFIG[0] = F("Back");
+  MENU_CONFIG[1] = F( "loop us");
+  MENU_CONFIG[2] = F( "mics");
+  MENU_CONFIG[3] = F( "maxdt");
+  MENU_CONFIG[4] = F( "minv");
+  MENU_CONFIG[5] = F( "samples");
 
-  
+
 }
 
 void menuConfig() {
   int choice = 0;
   while (true) {
-    choice = getChoice(choice,MENU_CONFIG_S,  MENU_CONFIG);
+    choice = getChoice(choice, MENU_CONFIG_S,  MENU_CONFIG);
     switch (choice) {
       case 0:
         return;
@@ -1098,16 +1108,16 @@ void menuConfig() {
 class __FlashStringHelper  * MENU_WIZARD[MENU_WIZARD_S];
 
 
-void setupMenuWizard(){
-  MENU_WIZARD[0]=F("Back");
-   MENU_WIZARD[1]=F( "Silence"); 
-   MENU_WIZARD[2]=F( "Dt");
+void setupMenuWizard() {
+  MENU_WIZARD[0] = F("Back");
+  MENU_WIZARD[1] = F( "Silence");
+  MENU_WIZARD[2] = F( "Center");
 }
 
 void menuWizard() {
   int choice = 0;
   while (true) {
-    choice = getChoice(choice,MENU_WIZARD_S,  MENU_WIZARD);
+    choice = getChoice(choice, MENU_WIZARD_S,  MENU_WIZARD);
     switch (choice) {
       case 0:
         return;
@@ -1115,15 +1125,13 @@ void menuWizard() {
         detectSilence();
         choice = 0;// prevent double clicking on button to launch the wizard again
         break;
+      case 2:
+        detectCenter();
+        choice = 0;// prevent double clicking on button to launch the wizard again
+        break;
 
     }
   }
-}
-
-void displayMessage(class __FlashStringHelper *msg) {
-  displayReset();
-  display.print(msg);
-  display.display();
 }
 
 void rra() {
@@ -1134,8 +1142,8 @@ void rra() {
 
 int detectLoudest() {
   long startTime = millis();
-  int maxv=0;
-  while (millis() - startTime < 1000 *5) {
+  int maxv = 0;
+  while (millis() - startTime < 1000 * 5) {
     rra();
 
 
@@ -1150,10 +1158,10 @@ int detectLoudest() {
 }
 
 /**
- * detect the loudest signal for 5 seconds of silence, 
- * then detect the loudest signal for 5 seconds with user making minimal noise to be picked up
- * the middle value is then set as new threshold
- */
+   detect the loudest signal for 5 seconds of silence,
+   then detect the loudest signal for 5 seconds with user making minimal noise to be picked up
+   the middle value is then set as new threshold
+*/
 void detectSilence() {
   displayMessage(F("5s quiet"));
   int silence = detectLoudest();
@@ -1185,6 +1193,48 @@ void detectSilence() {
 
 
 
+/**
+ * help the user to locate the center by simply displaying firstMic counts
+ * UP: reset counters
+ * OK: exit
+ */
+void detectCenter() {
+  long startTime = millis();
+  int maxv = 0;
+
+  int cnt = 0;
+  int hits[MAX_MICS];
+
+  for (int i = 0; i < config.MICS; i++)
+    hits[i] = 0;
+
+  while (true) {
+    rra();
+    if (firstMic >= 0) {
+      cnt++;
+      hits[firstMic]++;
+    }
+    displayReset();
+    for (int i = 0; i < config.MICS; i++)
+      display.println(hits[i]);
+
+    display.display();
+
+
+    byte button = getInputReleased(BUTTONS_ALL);
+    if (button == BUTTON_OK) {
+      return;
+    } else if (button == BUTTON_UP) {
+      cnt++;
+      for (int i = 0; i < config.MICS; i++)
+        hits[i] = 0;
+    }
+
+
+  }
+}
+
+
 void maybeEnterMenu() {
 
   if (buckets % 4 == 0) {
@@ -1208,7 +1258,7 @@ void maybeEnterMenu() {
   }
 }
 
-void setupMenus(){
+void setupMenus() {
   setupMenuMain();
   setupMenuWizard();
   setupMenuConfig();
@@ -1220,7 +1270,7 @@ void setup() {
 
   Serial.begin(115200);
   LOGN(F("setup"));
-  
+
 
   setupScreen();
   displayMessage(F("start..."));
