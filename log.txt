@@ -9,11 +9,10 @@
 
 
 
-sounds travel at 300m/s
-so 0.3m/ms
+sounds travel at 300m/s === 0.3m/ms
 
-0.060.2ms
+0.06m = 0.2ms
 
 
-so the bias is 6 cm
+so the time required to sample one mic introduces a 6 cm bias
 
