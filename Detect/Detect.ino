@@ -186,15 +186,12 @@ int getStrings( char ** choicesText) {
 /**
    display the list of choices
 */
-void showChoices(int currentChoice,  char ** choicesText) {
+void showChoices(int currentChoice, int choices, char ** choicesText) {
   LOG(F("currentChoice:"));
   LOGN(currentChoice);
 
 
-  int choices = getStrings(choicesText);
-  LOG(F("choices:"));
-  LOGN(choices);
-
+ 
   int startDisplay = 0;
 
   if (currentChoice > 1) {
@@ -222,13 +219,13 @@ void showChoices(int currentChoice,  char ** choicesText) {
 }
 
 
-int getChoice(int currentChoice, char ** choicesText) {
+int getChoice(int currentChoice, int choices,char ** choicesText) {
 
   while (true) {
 
 
 
-    showChoices(currentChoice, choicesText);
+    showChoices(currentChoice,choices, choicesText);
 
     int button = getInputReleased(BUTTONS_ALL);
     switch (button) {
@@ -244,7 +241,6 @@ int getChoice(int currentChoice, char ** choicesText) {
         break;
       case BUTTON_DOWN:
         currentChoice++;
-        int choices = getStrings(choicesText);
         if (currentChoice >= choices)
           currentChoice = choices - 1;
     }
@@ -999,8 +995,8 @@ void dumpSerial() {
 
 
 
-
-char * MENU_MAIN[] = {"Detect", "Info", "Auto", "Config", "Oscilo", "About", ""};
+#define MENU_MAIN_S 6
+char * MENU_MAIN[] = {"Detect", "Info", "Auto", "Config", "Oscilo", "About"};
 
 /**
    enter the main menu
@@ -1013,7 +1009,7 @@ int menuMainChoice = 0;
 
 void menuMain() {
   while (true) {
-    menuMainChoice = getChoice(menuMainChoice, MENU_MAIN);
+    menuMainChoice = getChoice(menuMainChoice, MENU_MAIN_S,MENU_MAIN);
     switch (menuMainChoice) {
       case 0:
         mode = MODE_DETECT;
@@ -1044,14 +1040,14 @@ void menuMain() {
 
 
 
-
-char * MENU_CONFIG[] = {"Back", "loop us", "mics", "maxdt", "minv", "samples", ""};
+#define MENU_CONFIG_S 6
+char * MENU_CONFIG[] = {"Back", "loop us", "mics", "maxdt", "minv", "samples"};
 
 
 void menuConfig() {
   int choice = 0;
   while (true) {
-    choice = getChoice(choice,  MENU_CONFIG);
+    choice = getChoice(choice,MENU_CONFIG_S,  MENU_CONFIG);
     switch (choice) {
       case 0:
         return;
@@ -1078,14 +1074,14 @@ void menuConfig() {
 
 
 
-
-char * MENU_WIZARD[] = {"Back", "Silence", "Dt", ""};
+#define MENU_WIZARD_S 3
+char * MENU_WIZARD[] = {"Back", "Silence", "Dt"};
 
 
 void menuWizard() {
   int choice = 0;
   while (true) {
-    choice = getChoice(choice,  MENU_WIZARD);
+    choice = getChoice(choice,MENU_WIZARD_S,  MENU_WIZARD);
     switch (choice) {
       case 0:
         return;
