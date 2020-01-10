@@ -186,7 +186,7 @@ int getStrings( char ** choicesText) {
 /**
    display the list of choices
 */
-void showChoices(int currentChoice, int choices, char ** choicesText) {
+void showChoices(int currentChoice, int choices, class __FlashStringHelper  ** choicesText) {
   LOG(F("currentChoice:"));
   LOGN(currentChoice);
 
@@ -219,7 +219,7 @@ void showChoices(int currentChoice, int choices, char ** choicesText) {
 }
 
 
-int getChoice(int currentChoice, int choices,char ** choicesText) {
+int getChoice(int currentChoice, int choices,class __FlashStringHelper ** choicesText) {
 
   while (true) {
 
@@ -996,8 +996,18 @@ void dumpSerial() {
 
 
 #define MENU_MAIN_S 6
-char * MENU_MAIN[] = {"Detect", "Info", "Auto", "Config", "Oscilo", "About"};
+class __FlashStringHelper * MENU_MAIN[MENU_MAIN_S];
 
+void setupMenuMain(){
+  MENU_MAIN[0]=F("Detect");
+  MENU_MAIN[1]=F( "Info");
+  MENU_MAIN[2]=F( "Auto");
+  MENU_MAIN[3]=F( "Config");
+  MENU_MAIN[4]=F( "Oscilo");
+  MENU_MAIN[5]=F( "About");
+  
+  
+}
 /**
    enter the main menu
    This method will only return after the user exits config
@@ -1041,8 +1051,18 @@ void menuMain() {
 
 
 #define MENU_CONFIG_S 6
-char * MENU_CONFIG[] = {"Back", "loop us", "mics", "maxdt", "minv", "samples"};
+class __FlashStringHelper  * MENU_CONFIG[MENU_CONFIG_S] ;
 
+void setupMenuConfig(){
+  MENU_CONFIG[0]=F("Back");
+  MENU_CONFIG[1]=F( "loop us");
+  MENU_CONFIG[2]=F( "mics");
+  MENU_CONFIG[3]=F( "maxdt");
+  MENU_CONFIG[4]=F( "minv");
+  MENU_CONFIG[5]=F( "samples");
+
+  
+}
 
 void menuConfig() {
   int choice = 0;
@@ -1075,8 +1095,14 @@ void menuConfig() {
 
 
 #define MENU_WIZARD_S 3
-char * MENU_WIZARD[] = {"Back", "Silence", "Dt"};
+class __FlashStringHelper  * MENU_WIZARD[MENU_WIZARD_S];
 
+
+void setupMenuWizard(){
+  MENU_WIZARD[0]=F("Back");
+   MENU_WIZARD[1]=F( "Silence"); 
+   MENU_WIZARD[2]=F( "Dt");
+}
 
 void menuWizard() {
   int choice = 0;
@@ -1182,6 +1208,11 @@ void maybeEnterMenu() {
   }
 }
 
+void setupMenus(){
+  setupMenuMain();
+  setupMenuWizard();
+  setupMenuConfig();
+}
 // --
 
 
@@ -1189,10 +1220,11 @@ void setup() {
 
   Serial.begin(115200);
   LOGN(F("setup"));
-
+  
 
   setupScreen();
   displayMessage(F("start..."));
+  setupMenus();
   setupMics();
   setupButtons();
   resetBpsTimer();
