@@ -16,3 +16,9 @@ sounds travel at 300m/s === 0.3m/ms
 
 so the time required to sample one mic introduces a 6 cm bias
 
+
+TODO:
+-individual mic inv/ threshold
+-save to flash
+-change screen: auto/center should be the main detect mode, and current detect should be 1st info page
+
