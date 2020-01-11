@@ -3,11 +3,19 @@
    reads signal from 2 mics, and switch on leds to indicate which mic is closer to the source of the noise.
    Works by identifying the timing of peak signal over 1000 samples
 
+
+   A0...A2 analog mics
+   D2...D4 noise detectors 
+
    Important:
    -the arduino must run on batteries for the mics to work properly
    -the ADC is quickly affected by low batteries
 
 */
+
+
+
+
 
 #define DEBUG 0
 #define LOG(x) do { if (DEBUG) { Serial.print(x); Serial.print(" ");}}  while (0);
@@ -47,20 +55,31 @@ void setupScreen() {
   display.setTextColor(SSD1306_WHITE);        // Draw white text
   display.setCursor(0, 0);            // Start at top-left corner
   display.display();
-
-
-  // Show the display buffer on the screen. You MUST call display() after
-  // drawing commands to make them visible on screen!
 }
 
 
 
+void displayReset() {
+  display.clearDisplay();
+  display.setTextSize(2);             // Normal 1:1 pixel scale
+  display.setTextColor(SSD1306_WHITE);        // Draw white text
+  display.setCursor(0, 0);
+}
+
+
+
+void displayMessage(class __FlashStringHelper *msg) {
+  displayReset();
+  display.print(msg);
+  display.display();
+}
+
 
 // -- buttons --------------------------------------------------------------------------------
 
-#define  BUTTON_OK (byte)4
-#define  BUTTON_UP (byte)5
-#define  BUTTON_DOWN (byte)6
+#define  BUTTON_OK (byte)8
+#define  BUTTON_UP (byte)6
+#define  BUTTON_DOWN (byte)5
 #define NO_BUTTON (byte)-1
 
 byte BUTTONS_ALL[] = {BUTTON_OK, BUTTON_UP, BUTTON_DOWN, NO_BUTTON};
@@ -78,7 +97,10 @@ void setupButtons() {
 
     pinMode(BUTTONS_ALL[i], INPUT);    // sets the digital pin 6 as input
   }
+
+  setupMenuScale();
 }
+
 
 
 /**
@@ -135,20 +157,6 @@ byte expectInput(byte * buttons) {
 
 
 
-void displayReset() {
-  display.clearDisplay();
-  display.setTextSize(2);             // Normal 1:1 pixel scale
-  display.setTextColor(SSD1306_WHITE);        // Draw white text
-  display.setCursor(0, 0);
-}
-
-
-
-void displayMessage(class __FlashStringHelper *msg) {
-  displayReset();
-  display.print(msg);
-  display.display();
-}
 
 
 //
@@ -183,15 +191,15 @@ void displayMessage(class __FlashStringHelper *msg) {
 //void error(char * info) {
 //  showMessage(info);
 //  expectInput(BUTTONS_ALL);
+////}
+//
+//
+//int getStrings( char ** choicesText) {
+//  int choice = 0;
+//  while (*choicesText[choice])
+//    choice++;
+//  return choice;
 //}
-
-
-int getStrings( char ** choicesText) {
-  int choice = 0;
-  while (*choicesText[choice])
-    choice++;
-  return choice;
-}
 
 /**
    display the list of choices
@@ -211,9 +219,6 @@ void showChoices(int currentChoice, int choices, class __FlashStringHelper  ** c
     }
 
   }
-
-
-
 
   displayReset();
 
@@ -263,8 +268,47 @@ int getChoice(int currentChoice, int choices, class __FlashStringHelper ** choic
 
 
 
+#define MENU_SCALE_S 5
+class __FlashStringHelper * MENU_SCALE[MENU_SCALE_S];
 
-int chooseValue(char *name, int value, int min, int max, int steps) {
+void setupMenuScale() {
+  MENU_SCALE[0] = F("Back");
+  MENU_SCALE[1] = F( "+- 1");
+  MENU_SCALE[2] = F( "+- 10");
+  MENU_SCALE[3] = F( "+- 100");
+  MENU_SCALE[4] = F( "+- 1000");
+
+
+}
+/**
+   enter the main menu
+   This method will only return after the user exits config
+
+*/
+
+// keep the main menu as a variable so that when we come back to the menu we are in the same spot
+
+
+
+int chooseValueAndScale(class __FlashStringHelper * name, int value, int min, int max) {
+  
+    int choice = getChoice(0, MENU_SCALE_S, MENU_SCALE);
+    switch (choice) {
+      case 0:
+        break;
+      case 1:
+        return chooseValue(name,value,min,max,1);
+      case 2:
+        return chooseValue(name,value,min,max,10);
+      case 3:
+        return chooseValue(name,value,min,max,100);
+      case 4:
+        return chooseValue(name,value,min,max,1000);
+    }
+    
+}
+
+int chooseValue( class __FlashStringHelper  *name, int value, int min, int max, int steps) {
   LOG(F("chooseValue"));
   LOG(name);
   LOGN(value);
@@ -306,6 +350,10 @@ int chooseValue(char *name, int value, int min, int max, int steps) {
 }
 
 
+
+
+
+
 // -- mic configuration --------------------------------------------
 
 
@@ -329,7 +377,7 @@ typedef struct Mic {
 
 
 #define BUTTON_PIN 6
-#define MAX_MICS 4
+#define MAX_MICS 3
 
 
 struct Mic mics[MAX_MICS];
@@ -337,11 +385,6 @@ struct Mic mics[MAX_MICS];
 
 
 
-void setupMics() {
-  mics[0].pin = A0;
-  mics[1].pin = A3;
-
-}
 
 
 void resetMic(int i) {
@@ -354,6 +397,14 @@ void resetMic(int i) {
   mics[i].acc = 0;
 }
 
+#define MIC_ANALOG_PIN(x) (x+14)
+#define MIC_DIGITAL_PIN(x) (x+2)
+
+void setupMics(){
+    for(int i=0;i<MAX_MICS;i++)
+      pinMode(MIC_DIGITAL_PIN(i), INPUT); 
+    
+}
 
 
 
@@ -385,7 +436,7 @@ void resetMic(int i) {
 
 char * version = "v0.01";
 typedef struct AnalysisConfig {
-
+  boolean digital;
   int MICS;
 
   int SAMPLES;
@@ -400,18 +451,33 @@ typedef struct AnalysisConfig {
 
 } AnalysisConfig;
 
-AnalysisConfig config = {
-  .MICS = 2,
-  .SAMPLES = 1000,
-  .threshold = 65,
-  .maxdt = 10,
-  .loopDelayUs = 200
-};
+AnalysisConfig config;
+
+void setupAnalysisConfig(boolean digital){
+  if (!digital){
+    config = {
+    .digital=false,
+    .MICS = 2,
+    .SAMPLES = 1000,
+    .threshold = 65,
+    .maxdt = 10,
+    .loopDelayUs = 20
+    };  
+  } else {
+    config = {
+    .digital=true,
+    .MICS = 2,
+    .SAMPLES = 10000,
+    .threshold = 100,
+    .maxdt = 500,
+    .loopDelayUs = 2000
+    };  
+  }
+}
 
 
 
-
-#define SAMPLES_REC 32
+#define SAMPLES_REC 80
 
 // record the values from mic1, for debug only
 byte d1[SAMPLES_REC];
@@ -469,7 +535,14 @@ void recordMics() {
   //  read the mics values, and maybe update max
   for (int i = 0; i < config.MICS; i++) {
 
-    int n = analogRead(mics[i].pin); // n1 range is [0..1024]
+
+
+    int n;
+    if (config.digital)
+       n=digitalRead(MIC_DIGITAL_PIN(i))==0?1024:0;
+    else   
+       n=analogRead(MIC_ANALOG_PIN(i)); // 14=A0 n range is [0..1024]
+       
 
 
     if (t * config.MICS < SAMPLES_REC) {
@@ -867,8 +940,13 @@ void updateScreenInfoMode() {
     } else if ( infoModePage == 1) {
 
       // nothing yet
-      display.print(F("mic page 2..."));
-
+      display.print(F("Raw:"));
+      int r;
+      if (config.digital)
+        r=digitalRead(MIC_DIGITAL_PIN(infoModeMic));
+      else
+        r=analogRead(MIC_ANALOG_PIN(infoModeMic));
+      display.print(r);
       display.println();
       //      break;
     }
@@ -1060,17 +1138,20 @@ void menuMain() {
 
 
 
-#define MENU_CONFIG_S 6
+#define MENU_CONFIG_S 9
 class __FlashStringHelper  * MENU_CONFIG[MENU_CONFIG_S] ;
 
 void setupMenuConfig() {
   MENU_CONFIG[0] = F("Back");
+  
   MENU_CONFIG[1] = F( "loop us");
   MENU_CONFIG[2] = F( "mics");
   MENU_CONFIG[3] = F( "maxdt");
   MENU_CONFIG[4] = F( "minv");
   MENU_CONFIG[5] = F( "samples");
-
+  MENU_CONFIG[6] = F( "Digital");
+  MENU_CONFIG[7] = F( "RST Ana.");
+  MENU_CONFIG[8] = F( "RST Dgt.");
 
 }
 
@@ -1081,19 +1162,32 @@ void menuConfig() {
     switch (choice) {
       case 0:
         return;
+      
       case 1:
-        config.loopDelayUs = chooseValue("loop us", config.loopDelayUs, 0, 2000, 20);
+        config.loopDelayUs = chooseValueAndScale(F("loop us"), config.loopDelayUs, 0, 2000);
         break;
-      case 2: config.MICS = chooseValue("mics", config.MICS, 1, MAX_MICS, 1);
-        break;
-
-      case 3: config.maxdt = chooseValue("maxdt", config.maxdt, 1, 50, 2);
-        break;
-      case 4: config.threshold = chooseValue("minv", config.threshold, 10, 505, 10);
-        break;
-      case 5: config.SAMPLES = chooseValue("samples", config.SAMPLES, 50, 2000, 50);
+      case 2: config.MICS = chooseValue(F("mics"), config.MICS, 1, MAX_MICS, 1);
         break;
 
+      case 3: config.maxdt = chooseValueAndScale(F("maxdt"), config.maxdt, 1, 5000);
+        break;
+      case 4: config.threshold = chooseValueAndScale(F("minv"), config.threshold, 10, 505);
+        break;
+      case 5: config.SAMPLES = chooseValueAndScale(F("samples"), config.SAMPLES, 10, 10000);
+        break;
+       case 6:
+        config.digital = chooseValue(F("digital"), config.digital?1:0, 0, 1, 1)!=0;        
+        break;
+       case 7:
+        
+        if (chooseValue(F("reset 2 analogic"), 0, 0, 1, 1))
+           setupAnalysisConfig(false);
+        break;
+        case 8:
+        
+        if (chooseValue(F("reset 2 digital"), 0, 0, 1, 1))
+           setupAnalysisConfig(true);
+        break;
 
     }
   }
@@ -1277,6 +1371,7 @@ void setup() {
   setupMenus();
   setupMics();
   setupButtons();
+  setupAnalysisConfig(false);
   resetBpsTimer();
 
   pinMode(LED_BUILTIN, OUTPUT);
