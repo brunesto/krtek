@@ -478,14 +478,31 @@ void setupAnalysisConfig(boolean digital) {
 
 #include <EEPROM.h>
 void saveConfig() {
-  EEPROM.write(0,'K');
+  EEPROM.write(0, 'K');
   EEPROM.put(1, config);
 }
 
 void loadConfig() {
-  byte k=EEPROM.read(0);
-  if (k=='K')
-     EEPROM.get(1, config); 
+  byte k = EEPROM.read(0);
+  if (k == 'K')
+    EEPROM.get(1, config);
+  Serial.print(F("digital"));
+  Serial.println(config.digital);
+
+  Serial.print(F("MICS"));
+  Serial.println(config.MICS);
+
+  Serial.print(F("SAMPLES"));
+  Serial.println(config.SAMPLES);
+
+  Serial.print(F("threshold"));
+  Serial.println(config.threshold);
+  Serial.print(F("maxdt"));
+  Serial.println(config.maxdt);
+
+  Serial.print(F("loopDelayUs"));
+  Serial.println(config.loopDelayUs);
+
 }
 
 
