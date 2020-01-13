@@ -159,6 +159,13 @@ void loopDetectMode() {
 
 // -- info mode -----------------------------------------------------------------
 
+
+#define OSCILO_LOOP 0
+#define OSCILO_TRIGGER 1
+#define  OSCILO_BLOCKED 2
+int osciloModeMode = OSCILO_LOOP;
+
+
 /**
   InfoMode can display several pages of information
 */
@@ -167,25 +174,43 @@ void loopDetectMode() {
 int infoModeY = INFO_MODE_MIN_PAGE;
 
 
-void updateScreenInfoMode() {
+boolean updateScreenInfoMode() {
+  while (true){
   LOG(F("updateScreenInfoMode "))
   //if (buckets % 4 == 0)
-  int v = getInputReleased(BUTTONS_UP_DOWN);
+  int v = getInputReleased(BUTTONS_ALL);
   if (v == BUTTON_DOWN) {
     infoModeY++;
     if (infoModeY >= 2 * config.MICS)
-      infoModeY = 2 * config.MICS - 1;
+      infoModeY =INFO_MODE_MIN_PAGE;
 
-  } else if (v == BUTTON_UP) {
-    infoModeY--;
-    if (infoModeY < INFO_MODE_MIN_PAGE)
-      infoModeY = INFO_MODE_MIN_PAGE;
-
+  } else if (v == BUTTON_UP && osciloModeMode != OSCILO_BLOCKED){
+    osciloModeMode++;
+    if (osciloModeMode > OSCILO_TRIGGER)
+      osciloModeMode = OSCILO_LOOP;
+  }else if (v == BUTTON_OK) {
+   
+    if (osciloModeMode == OSCILO_BLOCKED){
+      osciloModeMode = OSCILO_LOOP;
+      
+    } else {
+      return true; // exit
+    }
+   
   }
+
 
   int mic = getInputReleased(BUTTONS_UP_DOWN);
 
   displayReset();
+
+  display.setTextSize(1);
+  display.setCursor(100, 0);
+  display.print(osciloModeMode == OSCILO_LOOP ? F("") :(osciloModeMode == OSCILO_TRIGGER? F("T"): F("B")));
+
+
+  display.setTextSize(2);
+  display.setCursor(0, 0);
 
   display.print(F("p"));
   display.print((1 + infoModeY - INFO_MODE_MIN_PAGE));
@@ -292,16 +317,24 @@ void updateScreenInfoMode() {
     }
   }
 
-  display.display();
 
+    if (firstMic >= 0 && osciloModeMode == OSCILO_TRIGGER) {
+      osciloModeMode=OSCILO_BLOCKED;
+    } else {
+      display.display();
+    }
+
+    if (osciloModeMode!=OSCILO_BLOCKED)
+      return false;
+  }
+  
 }
 
 void loopInfoMode() {
   resetBpsTimer();
   while (true) {
     rra();
-    updateScreenInfoMode();
-    if (maybeExit())
+    if (updateScreenInfoMode())
       return;
   }
 }
@@ -311,9 +344,6 @@ void loopInfoMode() {
   in OSCILO_TRIGGER, if a firstMic is detected, the screen will freeze
 */
 
-#define OSCILO_LOOP 0
-#define OSCILO_TRIGGER 1
-int osciloModeMode = OSCILO_LOOP;
 
 void updateScreenOsciloMode() {
 
