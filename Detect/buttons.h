@@ -10,7 +10,7 @@
 extern byte BUTTONS_ALL[];
 extern byte BUTTONS_OK[];
 extern byte BUTTONS_UP_DOWN[];
-extern byte BUTTONS_UP[]; 
+extern byte BUTTONS_UP[];
 
 byte getInputReleased(byte *buttons);
 byte expectInput(byte *buttons) ;

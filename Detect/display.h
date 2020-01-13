@@ -8,4 +8,3 @@ void displayMessage(class __FlashStringHelper *msg);
 void displayReset();
 void setupMenuScale();
 void setupScreen();
-    

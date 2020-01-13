@@ -92,10 +92,10 @@ void displayMessage(class __FlashStringHelper *msg) {
 //}
 
 /**
- display the list of choices
- */
+  display the list of choices
+*/
 void showChoices(int currentChoice, int choices,
-    class __FlashStringHelper **choicesText) {
+                 class __FlashStringHelper **choicesText) {
   LOG(F("currentChoice:"));
   LOGN(currentChoice);
 
@@ -129,22 +129,22 @@ int getChoice(int currentChoice, int choices, class __FlashStringHelper **choice
 
     int button = getInputReleased(BUTTONS_ALL);
     switch (button) {
-    case BUTTON_OK :
+      case BUTTON_OK :
 
-      LOG(F("getChoice:"))
-      ;
-      LOGN(currentChoice)
-      ;
-      return currentChoice;
-    case BUTTON_UP :
-      currentChoice--;
-      if (currentChoice < 0)
-        currentChoice = 0;
-      break;
-    case BUTTON_DOWN :
-      currentChoice++;
-      if (currentChoice >= choices)
-        currentChoice = choices - 1;
+        LOG(F("getChoice:"))
+        ;
+        LOGN(currentChoice)
+        ;
+        return currentChoice;
+      case BUTTON_UP :
+        currentChoice--;
+        if (currentChoice < 0)
+          currentChoice = 0;
+        break;
+      case BUTTON_DOWN :
+        currentChoice++;
+        if (currentChoice >= choices)
+          currentChoice = choices - 1;
     }
 
     delay(INPUT_DELAY_MS);
@@ -166,33 +166,33 @@ void setupMenuScale() {
 }
 
 /**
- let the user specify a scale (+-1,+-10,+-100) a then specify a value
- */
+  let the user specify a scale (+-1,+-10,+-100) a then specify a value
+*/
 
 int chooseValueAndScale(class __FlashStringHelper *name, int value, int min,
-    int max) {
+                        int max) {
 
   int choice = getChoice(0, MENU_SCALE_S, MENU_SCALE);
   switch (choice) {
-  case 0:
-    break;
-  case 1:
-    return chooseValue(name, value, min, max, 1);
-  case 2:
-    return chooseValue(name, value, min, max, 10);
-  case 3:
-    return chooseValue(name, value, min, max, 100);
-  case 4:
-    return chooseValue(name, value, min, max, 1000);
+    case 0:
+      break;
+    case 1:
+      return chooseValue(name, value, min, max, 1);
+    case 2:
+      return chooseValue(name, value, min, max, 10);
+    case 3:
+      return chooseValue(name, value, min, max, 100);
+    case 4:
+      return chooseValue(name, value, min, max, 1000);
   }
   return -1;
 }
 
 /**
- let the user choose a value
- */
+  let the user choose a value
+*/
 int chooseValue(class __FlashStringHelper *name, int value, int min, int max,
-    int steps) {
+                int steps) {
   LOG(F("chooseValue"));
   LOG(name);
   LOGN(value);
@@ -212,18 +212,18 @@ int chooseValue(class __FlashStringHelper *name, int value, int min, int max,
     int button = expectInput(BUTTONS_ALL);
 
     switch (button) {
-    case BUTTON_OK :
-      return value;
+      case BUTTON_OK :
+        return value;
 
-    case BUTTON_DOWN :
-      value -= steps;
-      if (value < min)
-        value = min;
-      break;
-    case BUTTON_UP :
-      value += steps;
-      if (value > max)
-        value = max;
+      case BUTTON_DOWN :
+        value -= steps;
+        if (value < min)
+          value = min;
+        break;
+      case BUTTON_UP :
+        value += steps;
+        if (value > max)
+          value = max;
     }
 
     LOGN(value);

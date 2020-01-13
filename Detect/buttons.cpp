@@ -19,12 +19,12 @@ void setupButtons() {
     pinMode(BUTTONS_ALL[i], INPUT);    // sets the digital pin 6 as input
   }
 
-//  setupMenuScale();
+  //  setupMenuScale();
 }
 
 /**
- scan buttons status and return pin of first button pressed, or -1
- */
+  scan buttons status and return pin of first button pressed, or -1
+*/
 byte getInput(byte *pins) {
   for (int i = 0; pins[i] != NO_BUTTON ; i++) {
     int v = digitalRead(pins[i]);
@@ -35,8 +35,8 @@ byte getInput(byte *pins) {
 }
 
 /**
- same as getInput(), but wait for release
- */
+  same as getInput(), but wait for release
+*/
 byte getInputReleased(byte *buttons) {
   byte pressed = getInput(buttons);
   if (pressed == NO_BUTTON)
@@ -59,8 +59,8 @@ void waitForReleased(byte pin) {
 }
 
 /**
- wait for a button to be pressed and released
- */
+  wait for a button to be pressed and released
+*/
 byte expectInput(byte *buttons) {
   LOGN(F("expectInput"));
   while (true) {
