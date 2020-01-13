@@ -771,6 +771,15 @@ void resetBpsTimer() {
 
 
 
+void loopDetectMode() {
+  resetBpsTimer();
+  while(true){
+    rra();
+    updateScreenDetectMode();
+    if (maybeExit())
+      return;
+  }
+}
 
 void displayDetectModeMicLine(int i) {
   display.print(mics[i].vamax);
@@ -847,6 +856,16 @@ void updateScreenDetectMode() {
 #define INFO_MODE_MIN_PAGE -2
 
 int infoModeY = INFO_MODE_MIN_PAGE;
+
+void loopInfoMode() {
+  resetBpsTimer();
+  while(true){
+    rra();
+    updateScreenInfoMode();
+    if (maybeExit())
+      return;
+  }
+}
 
 
 void updateScreenInfoMode() {
@@ -986,6 +1005,17 @@ void updateScreenInfoMode() {
 }
 
 
+void loopOsciloMode() {
+  resetBpsTimer();
+  while(true){
+    rra();
+    updateScreenOsciloMode();
+    if (maybeExit())
+      return;
+  }
+}
+
+
 /*
    in OSCILO_TRIGGER, if a firstMic is detected, the screen will freeze
 */
@@ -1051,23 +1081,23 @@ void updateScreenOsciloMode() {
 
 
 }
-void updateScreen() {
-  LOG(F("updateScreen mode:"));
-  LOG(mode);
-  LOG(F("buckets:"));
-  LOGN(buckets);
-  switch (mode) {
-    case MODE_INFO:
-      updateScreenInfoMode();
-      break;
-    case MODE_DETECT:
-      updateScreenDetectMode();
-      break;
-    case MODE_OSCILO:
-      updateScreenOsciloMode();
-      break;
-  }
-}
+//void updateScreen() {
+//  LOG(F("updateScreen mode:"));
+//  LOG(mode);
+//  LOG(F("buckets:"));
+//  LOGN(buckets);
+//  switch (mode) {
+//    case MODE_INFO:
+//      updateScreenInfoMode();
+//      break;
+//    case MODE_DETECT:
+//      updateScreenDetectMode();
+//      break;
+//    case MODE_OSCILO:
+//      updateScreenOsciloMode();
+//      break;
+//  }
+//}
 
 
 void dumpSerial() {
@@ -1140,12 +1170,11 @@ void menuMain() {
     menuMainChoice = getChoice(menuMainChoice, MENU_MAIN_S, MENU_MAIN);
     switch (menuMainChoice) {
       case 0:
-        mode = MODE_DETECT;
-        resetBpsTimer();
-        return;
+        loopDetectMode();
+        break;
       case 1:
-        mode = MODE_INFO;
-        return;
+        loopInfoMode();
+        break;
       case 2:
         menuWizard();
         break;
@@ -1153,8 +1182,8 @@ void menuMain() {
         menuConfig();
         break;
       case 4:
-        mode = MODE_OSCILO;
-        return;
+        loopOsciloMode();
+        break;
       case 5:
         menuConfig2();
         break;
@@ -1399,7 +1428,7 @@ void detectCenter() {
 }
 
 
-void maybeEnterMenu() {
+boolean maybeExit() {
 
   if (buckets % 4 == 0) {
 
@@ -1411,7 +1440,7 @@ void maybeEnterMenu() {
       LOGN(v);
       //      waitForReleased(BUTTONS_PINS[BUTTON_OK]);
 
-      menuMain();
+      return true;
 
     }
     //           mode++;
@@ -1420,6 +1449,7 @@ void maybeEnterMenu() {
     //       }
 
   }
+  return false;
 }
 
 void setupMenus() {
@@ -1456,12 +1486,15 @@ void setup() {
   LOGN(F("setup done"));
 }
 
-
 void loop() {
+  loopDetectMode();
+  menuMain();
 
-  rra();
-  maybeEnterMenu();
-  updateScreen();
+  displayMessage(F("error exit loop"));
+  expectInput(BUTTONS_OK);
+  //rra();
+  //maybeEnterMenu();
+  //updateScreen();
 
 
   // dumpSerial();
