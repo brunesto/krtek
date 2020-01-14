@@ -113,7 +113,7 @@ void showChoices(int currentChoice, int choices,
 
   for (int i = startDisplay; i < choices; i++) {
     if (i == currentChoice)
-      display.print("*");
+      display.print((char)0x1a);
     else
       display.print(" ");
     display.println(choicesText[i]);

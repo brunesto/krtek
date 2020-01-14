@@ -4,5 +4,5 @@
 
 void setupMenus();
 void  loadConfig();
-void loopDetectMode();
+void displayHits();
 void menuMain();

@@ -33,6 +33,8 @@ void setup() {
   displayMessage(F("start..."));
   setupMenus();
   setupMics();
+  setupLeds();
+ 
   setupButtons();
   setupMenuScale();
   setupAnalysisConfig(false);
@@ -40,19 +42,16 @@ void setup() {
 
   loadConfig();
 
-  pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(7, OUTPUT);
-  pinMode(8, OUTPUT);
-
+  
   reset();
   LOGN(F("setup done"));
 }
 
 void loop() {
-  loopDetectMode();
+  displayHits();
   menuMain();
 
-  displayMessage(F("error exit loop"));
-  expectInput(BUTTONS_OK);
+ // displayMessage(F("error exit loop"));
+  //expectInput(BUTTONS_OK);
 
 }

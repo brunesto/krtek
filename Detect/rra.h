@@ -16,7 +16,8 @@
 */
 #define MIC_DIGITAL_PIN(x) (x+2)
 
-void setupMics();
+#define LED_PIN(x) (x+10)
+
 
 // -- recording --------------------------------------------------
 
@@ -123,9 +124,10 @@ extern int t;
 */
 
 // index of first mic
-#define UNSET -1
-#define UNDER_THRESHOLD -2
-#define DTT_TOO_HIGH -3
+
+#define ALL_UNDER_THRESHOLD -2
+#define SOME_UNDER_THRESHOLD -3
+#define DTT_TOO_HIGH -4
 
 extern  int firstMic;
 
@@ -133,6 +135,8 @@ extern  int firstMic;
 extern  int dtf[];
 
 
+void setupMics();
+void setupLeds();
 
 void setupAnalysisConfig(boolean digital);
 

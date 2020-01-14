@@ -17,6 +17,15 @@ void setupMics() {
 
 }
 
+void setupLeds() {
+  for (int i = 0; i < MAX_MICS; i++) {
+    pinMode(LED_PIN(i), OUTPUT);
+    digitalWrite(LED_PIN(i), HIGH);
+  }
+
+}
+
+
 // -- recording --------------------------------------------------
 
 //
@@ -51,9 +60,9 @@ void setupAnalysisConfig(boolean digital) {
     config.digital = false;
     config.MICS = 2;
     config.SAMPLES = 1000;
-    config.threshold = 65;
-    config.maxdt = 10;
-    config.loopDelayUs = 20;
+    config.threshold = 20;
+    config.maxdt = 15;
+    config.loopDelayUs = 10;
 
   } else {
     config.digital = true;
@@ -85,7 +94,7 @@ long recordingAccMs;
 */
 int t = 0;
 
-int firstMic = UNSET;
+int firstMic = ALL_UNDER_THRESHOLD;
 
 // dt to first
 int dtf[MAX_MICS];
@@ -146,7 +155,7 @@ void recordMics() {
 
     int n;
     if (config.digital)
-      n = digitalRead(MIC_DIGITAL_PIN(i)) == 0 ? 1024 : 0;
+      n = 512 + ((digitalRead(MIC_DIGITAL_PIN(i)) == 0) ? 256 : -256);
     else
       n = analogRead(MIC_ANALOG_PIN(i)); // 14=A0 n range is [0..1024]
 
@@ -188,7 +197,7 @@ int findLoudestPeakMicV() {
 void analyze() {
   LOGN(F("analyze"));
   // 0) reset analysis flags
-  firstMic = UNSET;
+  firstMic = ALL_UNDER_THRESHOLD;
   for (int i = 0; i < config.MICS; i++) {
     dtf[i] = 0;
   }
@@ -226,20 +235,24 @@ void analyze() {
   }
 
   // 1.1) find loudest mic
-  //  int maxv = findLoudestPeakMicV();
+  int maxv = findLoudestPeakMicV();
 
-  //  // is loudest signal too weak?
-  //  if (maxv < config.threshold) {
-  //    firstMic = UNDER_THRESHOLD;
-  //    return;
-  //  }
 
-  //TODO: threshold should vahe 2 values: min sound, min trigger noise
-  for (int i = 0; i < config.MICS; i++) {
-    if (mics[i].vamax < config.threshold) {
-      firstMic = UNDER_THRESHOLD;
-      return;
+  // is loudest signal too weak?
+  if (maxv < config.threshold) {
+    firstMic = ALL_UNDER_THRESHOLD;
+    return;
+  }
+
+  if (config.digital) {
+    //  //TODO: threshold should vahe 2 values: min sound, min trigger noise
+    for (int i = 0; i < config.MICS; i++) {
+      if (mics[i].vamax < config.threshold) {
+        firstMic = SOME_UNDER_THRESHOLD;
+        return;
+      }
     }
+
 
   }
 
@@ -325,9 +338,22 @@ float getBps() {
   return (buckets * 1000.0) / (recordingAccMs);
 }
 
+void updateLeds() {
+  if (firstMic >= 0) {
+    for (int i = 0; i < config.MICS; i++) {
+      if (firstMic != i)
+        digitalWrite(LED_PIN(i), LOW);
+    }
+    digitalWrite(LED_PIN(firstMic), HIGH);
+  } else {
+    for (int i = 0; i < config.MICS; i++)
+      digitalWrite(LED_PIN(i), firstMic == ALL_UNDER_THRESHOLD ? LOW : HIGH);
+  }
+}
 
 void rra() {
   reset();
   record();
   analyze();
+  updateLeds();
 }

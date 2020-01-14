@@ -79,8 +79,10 @@ void loadConfig() {
   byte k1 = EEPROM.read(0);
   byte k2 = EEPROM.read(1);
   if (k1 == 'K' && k2 == CONFIG_VERSION) {
-    EEPROM.get(1, config);
+    EEPROM.get(2, config);
     dumpConfig2Serial();
+    displayMessage(F("loaded cfg"));
+    delay(500);
   }
 }
 // -- detect mode -----------------------------------------------------------------
@@ -97,65 +99,53 @@ void displayDetectModeMicLine(int i) {
   display.print(mics[i].tamax);
 }
 
+void displayFirstMic() {
+  if (firstMic >= 0){
+    display.print(F("m"));
+    display.print(firstMic + 1);
+  } else {
+    switch (firstMic) {
 
+      case ALL_UNDER_THRESHOLD:
+        display.print(F(" - "));
+        break;
+     case SOME_UNDER_THRESHOLD:
+        display.print(F("!-"));
+        break;
+      case DTT_TOO_HIGH:
+        display.print(F("DT!"));
+        break;
+      default:
+        display.print(firstMic);
+
+    }
+
+  }
+}
 void updateScreenDetectMode() {
 
-  // if (buckets % 4 == 0) nonsense
-  {
-    displayReset();
-    display.print(config.digital ? F("D") : F("A"));
-    display.print(getBps());
-    display.print(" ");
-    if (firstMic >= 0)
-      display.print(firstMic + 1);
-    else {
-      switch (firstMic) {
 
-        case UNDER_THRESHOLD:
-          display.print(F("LOW"));
-          break;
-        case DTT_TOO_HIGH:
-          display.print(F("DT!"));
-          break;
-        default:
-          display.print(firstMic);
+  display.print(config.digital ? F("D") : F("A"));
+  displayFirstMic();
+  display.println();
 
-      }
+  for (int i = 0; i < config.MICS; i++) {
 
+    displayDetectModeMicLine(i);
+
+    if (i != firstMic) {
+      display.print(" ");
+      display.print(dtf[i]);
     }
-    display.print(" ");
-
     display.println();
 
-    for (int i = 0; i < config.MICS; i++) {
-
-      displayDetectModeMicLine(i);
-
-      if (i != firstMic) {
-        display.print(" ");
-        display.print(dtf[i]);
-      }
-      display.println();
-
-    }
-
-    // Show the display buffer on the screen. You MUST call display() after
-    // drawing commands to make them visible on screen!
-    display.display();
-
   }
+
+
+
+
 }
 
-
-void loopDetectMode() {
-  resetBpsTimer();
-  while (true) {
-    rra();
-    updateScreenDetectMode();
-    if (maybeExit())
-      return;
-  }
-}
 
 // -- info mode -----------------------------------------------------------------
 
@@ -169,165 +159,168 @@ int osciloModeMode = OSCILO_LOOP;
 /**
   InfoMode can display several pages of information
 */
-#define INFO_MODE_MIN_PAGE -2
+#define INFO_MODE_MIN_PAGE -3
 
 int infoModeY = INFO_MODE_MIN_PAGE;
 
 
 boolean updateScreenInfoMode() {
-  while (true){
-  LOG(F("updateScreenInfoMode "))
-  //if (buckets % 4 == 0)
-  int v = getInputReleased(BUTTONS_ALL);
-  if (v == BUTTON_DOWN) {
-    infoModeY++;
-    if (infoModeY >= 2 * config.MICS)
-      infoModeY =INFO_MODE_MIN_PAGE;
+  while (true) {
+    LOG(F("updateScreenInfoMode "))
+    //if (buckets % 4 == 0)
+    int v = getInputReleased(BUTTONS_ALL);
+    if (v == BUTTON_DOWN) {
+      infoModeY++;
+      if (infoModeY >= 2 * config.MICS)
+        infoModeY = INFO_MODE_MIN_PAGE;
 
-  } else if (v == BUTTON_UP && osciloModeMode != OSCILO_BLOCKED){
-    osciloModeMode++;
-    if (osciloModeMode > OSCILO_TRIGGER)
-      osciloModeMode = OSCILO_LOOP;
-  }else if (v == BUTTON_OK) {
-   
-    if (osciloModeMode == OSCILO_BLOCKED){
-      osciloModeMode = OSCILO_LOOP;
-      
+    } else if (v == BUTTON_UP && osciloModeMode != OSCILO_BLOCKED) {
+      osciloModeMode++;
+      if (osciloModeMode > OSCILO_TRIGGER)
+        osciloModeMode = OSCILO_LOOP;
+    } else if (v == BUTTON_OK) {
+
+      if (osciloModeMode == OSCILO_BLOCKED) {
+        osciloModeMode = OSCILO_LOOP;
+
+      } else {
+        return true; // exit
+      }
+
+    }
+
+
+    int mic = getInputReleased(BUTTONS_UP_DOWN);
+
+    displayReset();
+
+    display.setTextSize(1);
+    display.setCursor(100, 0);
+    display.print(osciloModeMode == OSCILO_LOOP ? F("") : (osciloModeMode == OSCILO_TRIGGER ? F("T") : F("B")));
+
+
+    display.setTextSize(2);
+    display.setCursor(0, 0);
+
+    display.print(F("p"));
+    display.print((1 + infoModeY - INFO_MODE_MIN_PAGE));
+    display.print(F("/"));
+    display.print((-INFO_MODE_MIN_PAGE) + 2 * config.MICS);
+
+    if (infoModeY < 0) {
+
+      if (infoModeY == INFO_MODE_MIN_PAGE) {
+        updateScreenDetectMode();
+
+
+      } else if (infoModeY == INFO_MODE_MIN_PAGE + 1) {
+        display.println();
+        // recording time
+        display.print(F("rt:"));
+        display.print(recordingAccMs / 1000.0);
+        display.println();
+
+        // buckets
+        display.print(F("b:"));
+        display.print(buckets);
+        display.println();
+
+        // buckets per second
+        display.print(F("b/s:"));
+        display.print(getBps());
+
+      } else if (infoModeY == INFO_MODE_MIN_PAGE + 2) {
+        display.println();
+        //      display.print(F("s:"));
+        //      display.print(recordingAccMs/1000.0);
+        //      display.println();
+
+        // values sampled
+        long valuesSampled = buckets * (long) config.SAMPLES;
+        display.print(F("vs:"));
+        display.print(valuesSampled);
+        display.println();
+
+        // values per second
+        long vpms = (((long) 1000) * valuesSampled) / recordingAccMs;
+        display.print(F("v/s:"));
+        display.print(vpms);
+
+      }
     } else {
-      return true; // exit
+      //  mic pages
+
+      int infoModeMic = infoModeY / 2;
+      int infoModePage = infoModeY % 2;
+
+      LOG(F("infoModeY:"));
+      LOG(infoModeY);
+      LOG(F("infoModeMic:"));
+      LOG(infoModeMic);
+      LOG(F("infoModePage:"));
+      LOG(infoModePage);
+
+      // display the mic and finish header
+      display.print(F(" m"));
+      display.print(infoModeMic + 1);
+      //    display.print(F("/"));
+      //    display.print(config.MICS );
+      //    display.print(F("p"));
+      //    display.print( (infoModePage) + 1);
+      display.println();
+
+      // CAPTCHA switch block not working ???
+      if (infoModePage == 0) {
+        //  switch( infoModePage) {  case 0:
+        displayDetectModeMicLine(infoModeMic);
+        display.println();
+
+        // min and max values in last bucket
+        display.print(F("r:"));
+        display.print(mics[infoModeMic].vmin);
+        display.print(F("-"));
+        display.print(mics[infoModeMic].vmax);
+        display.println();
+
+        // average
+        display.print(F("a"));
+        int avg = mics[infoModeMic].acc / config.SAMPLES;
+        display.print(avg);
+
+        // difference between min and max
+        display.print(F("d:"));
+        int d = mics[infoModeMic].vmax - mics[infoModeMic].vmin;
+        display.print(d);
+        display.println();
+
+        //      break;
+        //      case 1:
+      } else if (infoModePage == 1) {
+
+        // nothing yet
+        display.print(F("Raw:"));
+        int r;
+        if (config.digital)
+          r = digitalRead(MIC_DIGITAL_PIN(infoModeMic));
+        else
+          r = analogRead(MIC_ANALOG_PIN(infoModeMic));
+        display.print(r);
+        display.println();
+        //      break;
+      }
     }
-   
-  }
 
 
-  int mic = getInputReleased(BUTTONS_UP_DOWN);
-
-  displayReset();
-
-  display.setTextSize(1);
-  display.setCursor(100, 0);
-  display.print(osciloModeMode == OSCILO_LOOP ? F("") :(osciloModeMode == OSCILO_TRIGGER? F("T"): F("B")));
-
-
-  display.setTextSize(2);
-  display.setCursor(0, 0);
-
-  display.print(F("p"));
-  display.print((1 + infoModeY - INFO_MODE_MIN_PAGE));
-  display.print(F("/"));
-  display.print((-INFO_MODE_MIN_PAGE) + 2 * config.MICS);
-
-  if (infoModeY < 0) {
-
-    display.println();
-
-    if (infoModeY == INFO_MODE_MIN_PAGE) {
-
-      // recording time
-      display.print(F("rt:"));
-      display.print(recordingAccMs / 1000.0);
-      display.println();
-
-      // buckets
-      display.print(F("b:"));
-      display.print(buckets);
-      display.println();
-
-      // buckets per second
-      display.print(F("b/s:"));
-      display.print(getBps());
-
-    } else if (infoModeY == INFO_MODE_MIN_PAGE + 1) {
-      //      display.print(F("s:"));
-      //      display.print(recordingAccMs/1000.0);
-      //      display.println();
-
-      // values sampled
-      long valuesSampled = buckets * (long) config.SAMPLES;
-      display.print(F("vs:"));
-      display.print(valuesSampled);
-      display.println();
-
-      // values per second
-      long vpms = (((long) 1000) * valuesSampled) / recordingAccMs;
-      display.print(F("v/s:"));
-      display.print(vpms);
-
-    }
-  } else {
-    //  mic pages
-
-    int infoModeMic = infoModeY / 2;
-    int infoModePage = infoModeY % 2;
-
-    LOG(F("infoModeY:"));
-    LOG(infoModeY);
-    LOG(F("infoModeMic:"));
-    LOG(infoModeMic);
-    LOG(F("infoModePage:"));
-    LOG(infoModePage);
-
-    // display the mic and finish header
-    display.print(F(" m"));
-    display.print(infoModeMic + 1);
-    //    display.print(F("/"));
-    //    display.print(config.MICS );
-    //    display.print(F("p"));
-    //    display.print( (infoModePage) + 1);
-    display.println();
-
-    // CAPTCHA switch block not working ???
-    if (infoModePage == 0) {
-      //  switch( infoModePage) {  case 0:
-      displayDetectModeMicLine(infoModeMic);
-      display.println();
-
-      // min and max values in last bucket
-      display.print(F("r:"));
-      display.print(mics[infoModeMic].vmin);
-      display.print(F("-"));
-      display.print(mics[infoModeMic].vmax);
-      display.println();
-
-      // average
-      display.print(F("a"));
-      int avg = mics[infoModeMic].acc / config.SAMPLES;
-      display.print(avg);
-
-      // difference between min and max
-      display.print(F("d:"));
-      int d = mics[infoModeMic].vmax - mics[infoModeMic].vmin;
-      display.print(d);
-      display.println();
-
-      //      break;
-      //      case 1:
-    } else if (infoModePage == 1) {
-
-      // nothing yet
-      display.print(F("Raw:"));
-      int r;
-      if (config.digital)
-        r = digitalRead(MIC_DIGITAL_PIN(infoModeMic));
-      else
-        r = analogRead(MIC_ANALOG_PIN(infoModeMic));
-      display.print(r);
-      display.println();
-      //      break;
-    }
-  }
-
-
-    if (firstMic >= 0 && osciloModeMode == OSCILO_TRIGGER) {
-      osciloModeMode=OSCILO_BLOCKED;
+    if (firstMic != ALL_UNDER_THRESHOLD && osciloModeMode == OSCILO_TRIGGER) {
+      osciloModeMode = OSCILO_BLOCKED;
     } else {
       display.display();
     }
 
-    if (osciloModeMode!=OSCILO_BLOCKED)
+    if (osciloModeMode != OSCILO_BLOCKED)
       return false;
   }
-  
+
 }
 
 void loopInfoMode() {
@@ -615,13 +608,25 @@ void detectSilence() {
   expectInput(BUTTONS_ALL);
 
 }
+int charsDec(int dec) {
+  int shift = 0;
+  if (dec >= 10000)
+    shift += 4;
+  if (dec >= 1000)
+    shift += 3;
+  else if (dec >= 100)
+    shift += 2;
+  else if (dec >= 10)
+    shift += 1;
+  return shift;
+}
 
 /**
   help the user to locate the center by simply displaying firstMic counts
   UP: reset counters
   OK: exit
 */
-void detectCenter() {
+void displayHits() {
   long startTime = millis();
   int maxv = 0;
 
@@ -629,7 +634,7 @@ void detectCenter() {
   int hits[MAX_MICS];
 
   for (int i = 0; i < config.MICS; i++)
-    hits[i] = 0;
+    hits[i] = 1;
 
   while (true) {
     rra();
@@ -638,11 +643,32 @@ void detectCenter() {
       hits[firstMic]++;
     }
     displayReset();
-    for (int i = 0; i < config.MICS; i++)
-      display.println(hits[i]);
+
+
+    display.setCursor(0, 32);
+    display.print((char)0x11);
+    display.setCursor(0, 48);
+    display.println(hits[0]);
+    if (2 <= config.MICS) {
+
+      display.setCursor(110, 32);
+      display.print((char)0x10);
+
+      int x = 9 - charsDec(hits[1]);
+      display.setCursor(x * 12, 48);
+      display.println(hits[1]);
+    } if (3 <= config.MICS) {
+
+      display.setCursor(40, 0);
+      display.print((char)0x1e);
+
+      display.setCursor(30, 16);
+      display.println(hits[2]);
+    }
+    display.setCursor(12*4, 32);
+    displayFirstMic();
 
     display.display();
-
     byte button = getInputReleased(BUTTONS_ALL);
     if (button == BUTTON_OK) {
       return;
@@ -655,34 +681,74 @@ void detectCenter() {
   }
 }
 
-#define MENU_WIZARD_S 3
-class __FlashStringHelper *MENU_WIZARD[MENU_WIZARD_S];
-
-void setupMenuWizard() {
-  MENU_WIZARD[0] = F("Back");
-  MENU_WIZARD[1] = F("Silence");
-  MENU_WIZARD[2] = F("Center");
-}
-
-void menuWizard() {
-  int choice = 0;
-  while (true) {
-    choice = getChoice(choice, MENU_WIZARD_S, MENU_WIZARD);
-    switch (choice) {
-      case 0:
-        return;
-      case 1:
-        detectSilence();
-        choice = 0; // prevent double clicking on button to launch the wizard again
-        break;
-      case 2:
-        detectCenter();
-        choice = 0; // prevent double clicking on button to launch the wizard again
-        break;
-
-    }
-  }
-}
+//
+///**
+//  help the user to locate the center by simply displaying firstMic counts
+//  UP: reset counters
+//  OK: exit
+//*/
+//void detectCenter() {
+//  long startTime = millis();
+//  int maxv = 0;
+//
+//  int cnt = 0;
+//  int hits[MAX_MICS];
+//
+//  for (int i = 0; i < config.MICS; i++)
+//    hits[i] = 0;
+//
+//  while (true) {
+//    rra();
+//    if (firstMic >= 0) {
+//      cnt++;
+//      hits[firstMic]++;
+//    }
+//    displayReset();
+//    for (int i = 0; i < config.MICS; i++)
+//      display.println(hits[i]);
+//
+//    display.display();
+//
+//    byte button = getInputReleased(BUTTONS_ALL);
+//    if (button == BUTTON_OK) {
+//      return;
+//    } else if (button == BUTTON_UP) {
+//      cnt++;
+//      for (int i = 0; i < config.MICS; i++)
+//        hits[i] = 0;
+//    }
+//
+//  }
+//}
+//
+//#define MENU_WIZARD_S 3
+//class __FlashStringHelper *MENU_WIZARD[MENU_WIZARD_S];
+//
+//void setupMenuWizard() {
+//  MENU_WIZARD[0] = F("Back");
+//  MENU_WIZARD[1] = F("Silence");
+//  MENU_WIZARD[2] = F("Center");
+//}
+//
+//void menuWizard() {
+//  int choice = 0;
+//  while (true) {
+//    choice = getChoice(choice, MENU_WIZARD_S, MENU_WIZARD);
+//    switch (choice) {
+//      case 0:
+//        return;
+//      case 1:
+//        detectSilence();
+//        choice = 0; // prevent double clicking on button to launch the wizard again
+//        break;
+//      case 2:
+//        detectCenter();
+//        choice = 0; // prevent double clicking on button to launch the wizard again
+//        break;
+//
+//    }
+//  }
+//}
 
 #define MENU_MAIN_S 7
 class __FlashStringHelper *MENU_MAIN[MENU_MAIN_S];
@@ -690,7 +756,7 @@ class __FlashStringHelper *MENU_MAIN[MENU_MAIN_S];
 void setupMenuMain() {
   MENU_MAIN[0] = F("Detect");
   MENU_MAIN[1] = F("Info");
-  MENU_MAIN[2] = F("Auto");
+  MENU_MAIN[2] = F("Silence");
   MENU_MAIN[3] = F("Config");
   MENU_MAIN[4] = F("Oscilo");
   MENU_MAIN[6] = F("About");
@@ -711,13 +777,13 @@ void menuMain() {
     menuMainChoice = getChoice(menuMainChoice, MENU_MAIN_S, MENU_MAIN);
     switch (menuMainChoice) {
       case 0:
-        loopDetectMode();
+        displayHits();
         break;
       case 1:
         loopInfoMode();
         break;
       case 2:
-        menuWizard();
+        detectSilence();
         break;
       case 3:
         menuConfig();
@@ -741,7 +807,7 @@ void menuMain() {
 
 void setupMenus() {
   setupMenuMain();
-  setupMenuWizard();
+  //  setupMenuWizard();
   setupMenuConfig();
   setupMenuConfig2();
 }
