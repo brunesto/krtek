@@ -6,3 +6,4 @@ void setupMenus();
 void  loadConfig();
 void displayHits();
 void menuMain();
+void drawBucketMovingPixel();

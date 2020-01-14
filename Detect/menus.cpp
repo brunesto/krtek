@@ -100,7 +100,7 @@ void displayDetectModeMicLine(int i) {
 }
 
 void displayFirstMic() {
-  if (firstMic >= 0){
+  if (firstMic >= 0) {
     display.print(F("m"));
     display.print(firstMic + 1);
   } else {
@@ -109,7 +109,7 @@ void displayFirstMic() {
       case ALL_UNDER_THRESHOLD:
         display.print(F(" - "));
         break;
-     case SOME_UNDER_THRESHOLD:
+      case SOME_UNDER_THRESHOLD:
         display.print(F("!-"));
         break;
       case DTT_TOO_HIGH:
@@ -193,7 +193,7 @@ boolean updateScreenInfoMode() {
     int mic = getInputReleased(BUTTONS_UP_DOWN);
 
     displayReset();
-
+    drawBucketMovingPixel();
     display.setTextSize(1);
     display.setCursor(100, 0);
     display.print(osciloModeMode == OSCILO_LOOP ? F("") : (osciloModeMode == OSCILO_TRIGGER ? F("T") : F("B")));
@@ -370,6 +370,7 @@ void updateScreenOsciloMode() {
         display.drawLine(j, h0, j, h0 + (int) y, SSD1306_WHITE);
       }
     }
+    drawBucketMovingPixel();
 
     // display.print(d1[10]);
 
@@ -561,6 +562,7 @@ int detectLoudest() {
   while (millis() - startTime < 1000 * 5) {
     rra();
 
+    
     int v = findLoudestPeakMicV();
     if (v > maxv)
       maxv = v;
@@ -620,7 +622,9 @@ int charsDec(int dec) {
     shift += 1;
   return shift;
 }
-
+void drawBucketMovingPixel() {
+  display.drawPixel(buckets % 128, 0, SSD1306_WHITE);
+}
 /**
   help the user to locate the center by simply displaying firstMic counts
   UP: reset counters
@@ -665,8 +669,11 @@ void displayHits() {
       display.setCursor(30, 16);
       display.println(hits[2]);
     }
-    display.setCursor(12*4, 32);
+    display.setCursor(12 * 4, 32);
     displayFirstMic();
+
+
+    drawBucketMovingPixel();
 
     display.display();
     byte button = getInputReleased(BUTTONS_ALL);
