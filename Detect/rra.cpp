@@ -272,10 +272,12 @@ void analyze() {
   }
 
   // 3.b) if any mic has its peak which is too far away in time, cancel the whole thing
-  for (int i = 0; i < config.MICS; i++) {
-    if (dtf[i] > config.maxdt) {
-      firstMic = DTT_TOO_HIGH;
-      return;
+  if (config.maxdt > 0) {
+    for (int i = 0; i < config.MICS; i++) {
+      if (dtf[i] > config.maxdt) {
+        firstMic = DTT_TOO_HIGH;
+        return;
+      }
     }
   }
 

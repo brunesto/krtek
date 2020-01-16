@@ -324,6 +324,7 @@ boolean updateScreenInfoMode() {
 }
 
 void loopInfoMode() {
+  osciloModeMode=OSCILO_LOOP;
   resetBpsTimer();
   while (true) {
     rra();
@@ -484,7 +485,7 @@ void menuConfig() {
         break;
 
       case 3:
-        config.maxdt = chooseValueAndScale(F("maxdt"), config.maxdt, 1,
+        config.maxdt = chooseValueAndScale(F("maxdt"), config.maxdt, 0,
                                            5000);
         break;
       case 4:
