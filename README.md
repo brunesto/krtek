@@ -57,13 +57,13 @@ in BLOCKED mode, further recording/analysis are disabled
 ```         ``` <br/>
 
 ### Page 2
-```p2/X     ```
+```p2/X     ```  <br/>
 ```rt:XXX   ``` time spent sampling (inlcuding the us loop delay)  <br/>
 ```b:XXX    ``` periods, i.e. number of recording/analysis cycles performed  <br/>
 ```b/s:XXX  ``` periods per second <br/>
 
 ### Page 3
-```p3/X     ```
+```p3/X     ``` <br/>
 ```vs:      ``` samples recorded, one sample is for all mics  <br/>
 ```v/s:     ``` samples per seconds (i.e. sampling precision in Hz)  <br/>
 ```         ``` <br/>
