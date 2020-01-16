@@ -49,9 +49,10 @@ in BLOCKED mode, further recording/analysis are disabled
 
 ### Pages
 
-p1/XASTS page 1 of X, A:probe mode (Analog or Digital) , STS:status 
-MV@TV maxv of mic1 was MV at sample TV
-MV@TV same for mic2
+
+```p1/XASTS```  page 1 of X, A:probe mode (Analog or Digital) , STS:status <br/>
+```MV@TV ```  maxv of mic1 was MV at sample TV<br/>
+```MV@TV ```  same for mic2<br/>
 
 p2/X
 rt:XXX   time spent sampling (inlcuding the us loop delay)
