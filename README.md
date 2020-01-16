@@ -129,4 +129,4 @@ Sub menu for storing/reseting the config
 * Load: reload the configuration from EEPROM
 * Save: save the configuration to the EEPROM
 * Rst Ana: reset to factory settings for analogue probes (e.g microphone with 386 amplifier)
-* Rst Dgt: reset to factory settings for digital probes (e.g microphone with 363? comparator)
+* Rst Dgt: reset to factory settings for digital probes (e.g microphone with 393 comparator)
