@@ -88,10 +88,10 @@ in BLOCKED mode, further recording/analysis are disabled
 Use this menu to automatically adjust MinV (See Config for the definition of MinV)
 
 The sequence is as follows:
--1 second grace
--silent step: 5 second for detecting maximum sampled values (the environment should be silent)
--1 second grace
--noisy step: 5 second for detecting maximum sampled values (some small noise should be produced)
+* -1 second grace
+* -silent step: 5 second for detecting maximum sampled values (the environment should be silent)
+* -1 second grace
+* -noisy step: 5 second for detecting maximum sampled values (some small noise should be produced)
 
 The the minV is computed as beeing the middle point between the maximums recorded during silent and noisy steps
 
@@ -100,19 +100,19 @@ The the minV is computed as beeing the middle point between the maximums recorde
 ## Config
 enter  sub menu to config:
 
-Loop us: specify microseconds delay after sampling all probes
-Mics: number of probes
-Max Dt: maximum difference in sampling sequence number between peak signals. When the peak signals are further apart than this number, the analysis fails as the peaks are likely to come from different noise sources.
-Min V: Only used in analogue more. At least one of the probe must return maximum sampled value above Min.V  for the analysis to start.
-Samples: Number of samples in a period
-Digital: Toggle between Digital/Analog mode
+* Loop us: specify microseconds delay after sampling all probes
+* Mics: number of probes
+* Max Dt: maximum difference in sampling sequence number between peak signals. When the peak signals are further apart than this number, the analysis fails as the peaks are likely to come from different noise sources.
+* Min V: Only used in analogue more. At least one of the probe must return maximum sampled value above Min.V  for the analysis to start.
+* Samples: Number of samples in a period
+* Digital: Toggle between Digital/Analog mode
 
   
 ## Oscilo
 
   record the values sampled and dump them on the screen. Note that there is only room for 60 bytes, so only the first 60/mics samples will be displayed
-  OK: return to main menu
-  UP: trigger mode on/off . In trigger mode when a noise source is identified the display will freeze, until OK is pressed and released
+*   OK: return to main menu
+*   UP: trigger mode on/off . In trigger mode when a noise source is identified the display will freeze, until OK is pressed and released
   
 ## About
 Displays the version number  
@@ -126,7 +126,7 @@ Displays the version number
 
 Sub menu for storing/reseting the config
 
-Load: reload the configuration from EEPROM
-Save: save the configuration to the EEPROM
-Rst Ana: reset to factory settings for analogue probes (e.g microphone with 386 amplifier)
-Rst Dgt: reset to factory settings for digital probes (e.g microphone with 363? comparator)
+* Load: reload the configuration from EEPROM
+* Save: save the configuration to the EEPROM
+* Rst Ana: reset to factory settings for analogue probes (e.g microphone with 386 amplifier)
+* Rst Dgt: reset to factory settings for digital probes (e.g microphone with 363? comparator)
