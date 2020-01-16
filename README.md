@@ -47,29 +47,33 @@ in BLOCKED mode, further recording/analysis are disabled
 
 
 
-### Pages
+### Info Pages
 
 
-```p1/XASTS```  page 1 of X, A:probe mode (Analog or Digital) , STS:status <br/>
-```MV@TV ```  maxv of mic1 was MV at sample TV<br/>
-```MV@TV ```  same for mic2<br/>
+```p1/XASTS ```  page 1 of X, A:probe mode (Analog or Digital) , STS:status <br/>
+```MV@TV    ```  maxv of mic1 was MV at sample TV<br/>
+```MV@TV    ```  same for mic2<br/>
+```         ```
 
-p2/X
-rt:XXX   time spent sampling (inlcuding the us loop delay)
-b:XXX    periods, i.e. number of recording/analysis cycles performed
-b/s:XXX  periods per second
+```p2/X     ```
+```rt:XXX   ``` time spent sampling (inlcuding the us loop delay)
+```b:XXX    ``` periods, i.e. number of recording/analysis cycles performed
+```b/s:XXX  ``` periods per second
 
-p3/X
-vs:      samples recorded, one sample is for all mics
-v/s:     samples per seconds (i.e. sampling precision in Hz)
+```p3/X     ```
+```vs:      ``` samples recorded, one sample is for all mics
+```v/s:     ``` samples per seconds (i.e. sampling precision in Hz)
+```         ```
 
-p4/X m1 first page for mic 1
-MV@TV maxv of mic1 was MV at sample TV
-r:XXX-XXX minimum and maximum values sampled for mic 1
-a:XXX d:X average and range
+```p4/X m1  ``` first page for mic 1
+```MV@TV    ``` maxv of mic1 was MV at sample TV
+```r:XXX-XXX``` minimum and maximum values sampled for mic 1
+```a:XXX d:X``` average and range
 
-p5/X m1 2nd page for mic 1
-r:XXX  the current raw value of the probe
+```p5/X m1  ``` 2nd page for mic 1
+```r:XXX    ``` the current raw value of the probe
+```         ``` 
+```         ```
 
 2 further pages per additional mic are available
 
