@@ -9,14 +9,14 @@ It can handle either analog mics or digital probes.
 Displays the number of times a noise source has been identified.
 
 The center of the scrren shows the result of last analysis
-- : sampled values too low
-!-: (in Digital mode only) not all probes detected a signal
-DT: difference in peak time is too long,  The peaks are likely to come from different noise sources.
-mX: the Xth (1,2,3) probe picked up the signal first
+* ```-``` : sampled values too low
+* ```!-``` : (in Digital mode only) not all probes detected a signal
+* ```DT``` : difference in peak time is too long,  The peaks are likely to come from different noise sources.
+* ```mX``` : the Xth (1,2,3) probe picked up the signal first
 
 Buttons:
-UP: reset counters
-OK: return to the main menu
+* UP: reset counters
+* OK: return to the main menu
 
   
 ## Info
@@ -31,18 +31,18 @@ The pages have 3 modes: in NORMAL/TRIGGER/BLOCKED
 in all modes, the button DOWN will cycle thru next page
 
 in NORMAL mode:
-UP: enter trigger mode
-OK: return to the main menu
+* UP: enter trigger mode
+* OK: return to the main menu
 
 
-In TRIGGER mode, when one analysis succeeds, the mode becomes BLOCKED
-In TRIGGER mode, UP will return to NORMAL mode
+In TRIGGER mode, when one analysis succeeds, the mode becomes BLOCKED.
+In TRIGGER mode, UP will return to NORMAL mode.
 
 
 in BLOCKED mode, further recording/analysis are disabled
-The user can still navigate the info  pages with DOWN button.
-UP has no effect
-OK will return to NOIRMAL mode
+* The user can still navigate the info  pages with DOWN button.
+* UP has no effect
+* OK will return to NOIRMAL mode
 
 
 
